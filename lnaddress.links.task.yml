@@ -1,0 +1,4 @@
+lnaddress.user:
+  route_name: lnaddress.user
+  title: 'Lightning Addresses'
+  base_route: entity.user.canonical

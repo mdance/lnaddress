@@ -1,0 +1,12 @@
+<?php
+/**
+ * @file
+ * Provides lightning network address functionality.
+ */
+
+/**
+ * Implements hook_cron().
+ */
+function lnaddress_cron() {
+  \Drupal::service('lnaddress')->cron();
+}

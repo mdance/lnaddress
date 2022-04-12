@@ -1,0 +1,6 @@
+enabled: true
+domain: ''
+min_sendable: 1000
+max_sendable: 4696729000
+max_comment_length: 1000
+logging: true

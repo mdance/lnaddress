@@ -1,0 +1,16 @@
+services:
+  logger.channel.lnaddress:
+    class: Drupal\Core\Logger\LoggerChannel
+    factory: logger.factory:get
+    arguments:
+      - 'lnaddress'
+  lnaddress:
+    class: Drupal\lnaddress\LnAddressService
+    arguments:
+      - '@config.factory'
+      - '@state'
+      - '@database'
+      - '@logger.channel.lnaddress'
+      - '@page_cache_kill_switch'
+      - '@entity_type.manager'
+      - '@lightning'

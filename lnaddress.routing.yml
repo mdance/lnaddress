@@ -1,0 +1,36 @@
+lnaddress.admin:
+  path: '/admin/config/people/lnaddress'
+  defaults:
+    _title: 'Lightning Network Addresses'
+    _form: 'Drupal\lnaddress\Form\LnAddressAdminForm'
+  requirements:
+    _permission: 'administer lnaddress'
+
+lnaddress.lnurl_pay:
+  path: '/.well-known/lnurlp/{username}'
+  defaults:
+    _title: 'Lightning URL Payment'
+    _controller: '\Drupal\lnaddress\Controller\LnAddressController::lnUrlPay'
+  requirements:
+    _access: 'TRUE'
+
+lnaddress.callback:
+  path: '/lnaccount/{lnaddress_callback}'
+  defaults:
+    _title: 'Lightning Address Challenge'
+    _controller: '\Drupal\lnaddress\Controller\LnAddressController::callback'
+  requirements:
+    _access: 'TRUE'
+
+lnaddress.user:
+  path: '/user/{user}/lnaddress'
+  defaults:
+    _title: 'Lightning Address Defaults'
+    _form: '\Drupal\lnaddress\Form\UserDefaultsForm'
+  requirements:
+    user: '\d+'
+    _permission: 'administer own lnaddress'
+  options:
+    parameters:
+      user:
+        type: 'entity:user'

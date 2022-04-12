@@ -1,0 +1,89 @@
+<?php
+/**
+ * @file
+ * Provides install, and update hooks.
+ */
+
+use Drupal\lnaddress\LnAddressConstants;
+
+/**
+ * Implements hook_schema().
+ */
+function lnaddress_schema() {
+  $output = [];
+
+  $output[LnAddressConstants::TABLE_USER_DEFAULTS] = [
+    'description' => 'Provides lightning network address user defaults.',
+    'fields' => [
+      'uid' => [
+        'description' => 'Provides the user id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'enabled' => [
+        'description' => 'Provides the enabled status.',
+        'type' => 'int',
+      ],
+      'min_sendable' => [
+        'description' => 'Provides the minimum sendable amount.',
+        'type' => 'int',
+        'size' => 'big',
+      ],
+      'max_sendable' => [
+        'description' => 'Provides the maximum sendable amount.',
+        'type' => 'int',
+        'size' => 'big',
+      ],
+    ],
+    'indexes' => [
+    ],
+    'primary key' => ['uid'],
+  ];
+
+  $output[LnAddressConstants::TABLE_CALLBACKS] = [
+    'description' => 'Provides lightning network address callbacks.',
+    'fields' => [
+      'id' => [
+        'description' => 'Provides the id.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'created' => [
+        'description' => 'Provides the creation date.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'type' => 'int',
+        'description' => 'Provides the user id.',
+        'not null' => TRUE,
+      ],
+      'hash' => [
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'Provides the hash.',
+      ],
+      'enabled' => [
+        'description' => 'Provides the enabled status.',
+        'type' => 'int',
+      ],
+      'min_sendable' => [
+        'description' => 'Provides the minimum sendable amount.',
+        'type' => 'int',
+        'size' => 'big',
+      ],
+      'max_sendable' => [
+        'description' => 'Provides the maximum sendable amount.',
+        'type' => 'int',
+        'size' => 'big',
+      ],
+    ],
+    'indexes' => [
+    ],
+    'primary key' => ['id'],
+  ];
+
+  return $output;
+}

@@ -1,0 +1,4 @@
+administer lnaddress:
+  title: 'Administer Lightning Network Addresses'
+administer own lnaddress:
+  title: 'Administer User Lightning Network Addresses'

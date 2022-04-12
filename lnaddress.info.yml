@@ -1,0 +1,7 @@
+name: Lightning Network Addresses
+type: module
+description: 'Provides lightning network address functionality.'
+package: Lightning
+core_version_requirement: ^8 || ^9
+depenencies:
+  - clightning

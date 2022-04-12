@@ -1,0 +1,5 @@
+lnaddress.admin:
+  title: Lightning Network Addresses
+  route_name: lnaddress.admin
+  parent: user.admin_index
+  description: 'Configure lightning network address functionality.'

@@ -3,6 +3,7 @@
 namespace Drupal\lnaddress;
 
 use Drupal\clightning\LightningServiceInterface;
+use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -18,121 +19,86 @@ class LnAddressService implements LnAddressServiceInterface {
   use StringTranslationTrait;
 
   /**
-   * Provides the config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
    * Provides the config.
-   *
-   * @var \Drupal\Core\Config\Config
    */
-  protected $config;
+  protected Config $config;
 
   /**
-   * Provides the state service.
+   * Provides the constructor method.
    *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
-   * Provides the database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $connection;
-
-  /**
-   * Provides the logger.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected $logger;
-
-  /**
-   * Provides the entity type manager.
-   *
-   * @var EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * Provides the lightning service.
-   *
-   * @var LightningServiceInterface
-   */
-  protected $lightning;
-
-  /**
-   * {@inheritDoc}
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory service.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   The database connection.
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger service.
+   * @param \Drupal\Core\PageCache\ResponsePolicy\KillSwitch $killSwitch
+   *   The kill switch service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\clightning\LightningServiceInterface $lightning
+   *   The module service.
    */
   public function __construct(
-    ConfigFactoryInterface $config_factory,
-    StateInterface $state,
-    Connection $connection,
-    LoggerChannelInterface $logger,
-    KillSwitch $kill_switch,
-    EntityTypeManagerInterface $entity_type_manager,
-    LightningServiceInterface $lightning
+    protected ConfigFactoryInterface $configFactory,
+    protected StateInterface $state,
+    protected Connection $connection,
+    protected LoggerChannelInterface $logger,
+    protected KillSwitch $killSwitch,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected LightningServiceInterface $lightning,
   ) {
-    $this->configFactory = $config_factory;
-    $this->config = $config_factory->getEditable(LnAddressConstants::SETTINGS);
-    $this->state = $state;
-    $this->connection = $connection;
-    $this->logger = $logger;
-    $this->killSwitch = $kill_switch;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->lightning = $lightning;
+    $this->config = $configFactory->getEditable(LnAddressConstants::SETTINGS);
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getDomain() {
+  public function getDomain(): string {
     return $this->config->get(LnAddressConstants::KEY_DOMAIN) ?? '';
   }
+
   /**
    * {@inheritDoc}
    */
-  public function getEnabled() {
+  public function getEnabled(): bool {
     return $this->config->get(LnAddressConstants::KEY_ENABLED) ?? TRUE;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getMinSendable() {
+  public function getMinSendable(): int {
     return $this->config->get(LnAddressConstants::KEY_MIN_SENDABLE) ?? LnAddressConstants::MIN_SENDABLE;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getMaxSendable() {
+  public function getMaxSendable(): int {
     return $this->config->get(LnAddressConstants::KEY_MAX_SENDABLE) ?? LnAddressConstants::MAX_SENDABLE;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getMaxCommentLength() {
+  public function getMaxCommentLength(): int {
     return $this->config->get(LnAddressConstants::KEY_MAX_COMMENT_LENGTH) ?? LnAddressConstants::MAX_COMMENT_LENGTH;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getLogging() {
+  public function getLogging(): bool {
     return $this->config->get(LnAddressConstants::KEY_LOGGING) ?? TRUE;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function saveConfiguration($input) {
+  public function saveConfiguration($input): void {
     $keys = [
       LnAddressConstants::KEY_DOMAIN,
       LnAddressConstants::KEY_ENABLED,
@@ -207,14 +173,14 @@ class LnAddressService implements LnAddressServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function getUserDataDefaults() {
+  public function getUserDataDefaults(): array {
     $domain = $this->getDomain();
     $enabled = $this->getEnabled();
     $min_sendable = $this->getMinSendable();
     $max_sendable = $this->getMaxSendable();
     $max_comment_length = $this->getMaxCommentLength();
 
-    $output = [
+    return [
       'domain' => $domain,
       'enabled' => $enabled,
       'min_sendable' => $min_sendable,
@@ -223,8 +189,6 @@ class LnAddressService implements LnAddressServiceInterface {
       'max_comment_length' => $max_comment_length,
       'tag' => 'payRequest',
     ];
-
-    return $output;
   }
 
   /**

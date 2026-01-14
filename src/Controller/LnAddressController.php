@@ -6,7 +6,6 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\lnaddress\LnAddressConstants;
 use Drupal\lnaddress\LnAddressServiceInterface;
-use Drupal\lnaddress\LnAddressServiceTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,31 +16,16 @@ use Symfony\Component\HttpFoundation\Request;
 class LnAddressController implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
-  use LnAddressServiceTrait;
-
-  /**
-   * Provides the module service.
-   *
-   * @var \Drupal\lnaddress\LnAddressServiceInterface
-   */
-  protected $lnaddress;
 
   /**
    * Provides the constructor.
+   *
+   * @param \Drupal\lnaddress\LnAddressServiceInterface $lnaddress
+   *   Provides the module service.
    */
   public function __construct(
-    LnAddressServiceInterface $lnaddress
+    protected LnAddressServiceInterface $lnaddress,
   ) {
-    $this->lnaddress = $lnaddress;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('lnaddress')
-    );
   }
 
   /**
@@ -49,17 +33,19 @@ class LnAddressController implements ContainerInjectionInterface {
    *
    * @param string $username
    *   Provides the username.
-   * @return void
+   *
+   * @return JsonResponse
+   *   The JSON response.
    */
-  public function lnUrlPay($username, Request $request) {
+  public function lnUrlPay($username) {
     $output = new JsonResponse();
 
     $data = [];
     $error = FALSE;
     $reason = NULL;
 
-    $user = $this->lnaddress()->resolveUsername($username);
-    $user_data = $this->lnaddress()->getUserData($user);
+    $user = $this->lnaddress->resolveUsername($username);
+    $user_data = $this->lnaddress->getUserData($user);
 
     $domain = $user_data[LnAddressConstants::KEY_DOMAIN];
     $enabled = $user_data[LnAddressConstants::KEY_ENABLED];
@@ -73,7 +59,7 @@ class LnAddressController implements ContainerInjectionInterface {
     }
 
     try {
-      $callback = $this->lnaddress()->getPayCallbackUrl($user)->toString();
+      $callback = $this->lnaddress->getPayCallbackUrl($user)->toString();
 
       // @todo Set these values properly
       $metadata = [
@@ -137,7 +123,10 @@ class LnAddressController implements ContainerInjectionInterface {
    *
    * @param string $lnaddress_callback
    *   Provides the callback.
-   * @return void
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
    */
   public function callback($lnaddress_callback, Request $request) {
     $output = new JsonResponse();
@@ -165,7 +154,7 @@ class LnAddressController implements ContainerInjectionInterface {
       'value' => $lnaddress_callback,
     ];
 
-    $callbacks = $this->lnaddress()->getPayCallback($conditions);
+    $callbacks = $this->lnaddress->getPayCallback($conditions);
     $total = count($callbacks);
 
     if (!$total) {
@@ -176,7 +165,7 @@ class LnAddressController implements ContainerInjectionInterface {
 
       $uid = $callback['uid'];
 
-      $user_data = $this->lnaddress()->getUserData($uid);
+      $user_data = $this->lnaddress->getUserData($uid);
 
       $enabled = $user_data['enabled'];
       $min_sendable = $user_data['min_sendable'];
@@ -231,7 +220,7 @@ class LnAddressController implements ContainerInjectionInterface {
 
         $props['metadata'] = $metadata;
 
-        $pr = $this->lnaddress()->getPaymentRequest($props);
+        $pr = $this->lnaddress->getPaymentRequest($props);
 
         $data['pr'] = $pr;
         // @todo Implement success action functionality.
@@ -257,4 +246,14 @@ class LnAddressController implements ContainerInjectionInterface {
 
     return $output;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('lnaddress')
+    );
+  }
+
 }

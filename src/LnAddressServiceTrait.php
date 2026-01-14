@@ -9,17 +9,15 @@ trait LnAddressServiceTrait {
 
   /**
    * Provides the lightning network authentication service.
-   *
-   * @var \Drupal\lnaddress\LnAddressServiceInterface
    */
-  protected $lnaddress;
+  protected ?LnAddressServiceInterface $lnaddress = NULL;
 
   /**
    * Provides the lightning network authentication service.
    *
    * @return \Drupal\lnaddress\LnAddressServiceInterface
    */
-  public function lnaddress() {
+  public function lnaddress(): LnAddressServiceInterface {
     if (is_null($this->lnaddress)) {
       $this->lnaddress = \Drupal::service('lnaddress');
     }

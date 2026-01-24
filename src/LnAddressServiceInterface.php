@@ -17,7 +17,7 @@ interface LnAddressServiceInterface {
    * @return string
    *   A string providing the domain.
    */
-  public function getDomain();
+  public function getDomain(): string;
 
   /**
    * Gets the enabled status.
@@ -25,7 +25,7 @@ interface LnAddressServiceInterface {
    * @return bool
    *   A boolean providing the enabled status.
    */
-  public function getEnabled();
+  public function getEnabled(): bool;
 
   /**
    * Gets the minimum sendable amount.
@@ -33,7 +33,7 @@ interface LnAddressServiceInterface {
    * @return int
    *   An integer providing the minimum sendable amount.
    */
-  public function getMinSendable();
+  public function getMinSendable(): int;
 
   /**
    * Gets the maximum sendable amount.
@@ -41,7 +41,7 @@ interface LnAddressServiceInterface {
    * @return int
    *   An integer providing the maximum sendable amount.
    */
-  public function getMaxSendable();
+  public function getMaxSendable(): int;
 
   /**
    * Gets the maximum comment length.
@@ -49,7 +49,7 @@ interface LnAddressServiceInterface {
    * @return int
    *   An integer providing the maximum comment length.
    */
-  public function getMaxCommentLength();
+  public function getMaxCommentLength(): int;
 
   /**
    * Gets the logging status.
@@ -57,15 +57,17 @@ interface LnAddressServiceInterface {
    * @return bool
    *   A boolean representing the logging status.
    */
-  public function getLogging();
+  public function getLogging(): bool;
 
   /**
    * Saves the configuration.
    *
    * @param array $input
    *   An array of values.
+   *
+   * @return self
    */
-  public function saveConfiguration($input);
+  public function saveConfiguration(array $input): self;
 
   /**
    * Resolves the username to a user object.
@@ -73,9 +75,10 @@ interface LnAddressServiceInterface {
    * @param string $username
    *   Provides the username.
    *
-   * @return mixed
+   * @return ?UserInterface
+   *   The user object, otherwise NULL.
    */
-  public function resolveUsername($username);
+  public function resolveUsername(string $username): ?UserInterface;
 
   /**
    * Gets the user data defaults.
@@ -83,41 +86,45 @@ interface LnAddressServiceInterface {
    * @return array
    *   An array of user data defaults.
    */
-  public function getUserDataDefaults();
+  public function getUserDataDefaults(): array;
 
   /**
    * Gets the user data.
    *
-   * @param int $uid
+   * @param int|UserInterface $user
    *   Provides the user id.
    *
    * @return array
    *   An array of user data.
    */
-  public function getUserData($uid);
+  public function getUserData(int|UserInterface $user): array;
 
   /**
    * Gets the pay callback url.
    *
-   * @param UserInterface $username
+   * @param UserInterface $user
    *   Provides the user.
-   * @param $callback
-   *   Provides the pa callback.
+   * @param ?array $callback
+   *   An optional callback.
    *
    * @return Url
    *   Provides the url.
    */
-  public function getPayCallbackUrl($user, $callback);
+  public function getPayCallbackUrl(
+    UserInterface $user,
+    ?array $callback = NULL,
+  ): Url;
 
   /**
    * Gets the pay callback.
    *
-   * @param UserInterface $username
-   *   Provides the user.
+   * @param UserInterface $user
+   *   The user.
    *
-   * @return mixed
+   * @return ?array
+   *   The user pay callback.
    */
-  public function getUserPayCallback($user);
+  public function getUserPayCallback(UserInterface $user): ?array;
 
   /**
    * Gets the pay callback.
@@ -125,23 +132,24 @@ interface LnAddressServiceInterface {
    * @param array $conditions
    *   An array of conditions.
    *
-   * @return mixed
+   * @return array
+   *   The pay callback.
    */
-  public function getPayCallback(array $conditions = []);
+  public function getPayCallback(array $conditions = []): array;
 
   /**
    * Gets a payment request.
    *
    * @param array $props
    *   An array of input parameters.
-   * @return string
-   *   A string containing the payment request.
+   * @return string|bool
+   *   A string containing the payment request, or FALSE.
    */
-  public function getPaymentRequest($props = []);
+  public function getPaymentRequest(array $props = []): string|bool;
 
   /**
    * Performs crontab processing.
    */
-  public function cron();
+  public function cron(): void;
 
 }

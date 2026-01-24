@@ -12,6 +12,7 @@ use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\Core\Utility\Error;
 use Drupal\user\UserInterface;
 
 class LnAddressService implements LnAddressServiceInterface {
@@ -98,7 +99,7 @@ class LnAddressService implements LnAddressServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function saveConfiguration($input): void {
+  public function saveConfiguration($input): self {
     $keys = [
       LnAddressConstants::KEY_DOMAIN,
       LnAddressConstants::KEY_ENABLED,
@@ -138,12 +139,14 @@ class LnAddressService implements LnAddressServiceInterface {
     if ($save) {
       $this->state->set(LnAddressConstants::STATE, $state);
     }
+
+    return $this;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function resolveUsername($username) {
+  public function resolveUsername(string $username): ?UserInterface {
     $output = NULL;
 
     $storage = $this->entityTypeManager->getStorage('user');
@@ -154,16 +157,14 @@ class LnAddressService implements LnAddressServiceInterface {
     ];
 
     foreach ($fields as $field) {
-      $query = $storage->getQuery();
+      $query = $storage->getQuery()->accessCheck(FALSE);
 
       $query->condition($field, $username);
 
       $results = $query->execute();
 
       foreach ($results as $id) {
-        $output = $storage->load($id);
-
-        return $output;
+        return $storage->load($id);
       }
     }
 
@@ -194,16 +195,16 @@ class LnAddressService implements LnAddressServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function getUserData($input) {
-    if (!$input instanceof UserInterface) {
-      $input = $this->resolveUsername($input);
+  public function getUserData(int|UserInterface $user): array {
+    if (!$user instanceof UserInterface) {
+      $user = $this->resolveUsername($user);
     }
 
-    if (!$input instanceof UserInterface) {
+    if (!$user instanceof UserInterface) {
       throw new \Exception('The user could not be resolved.');
     }
 
-    $uid = $input->id();
+    $uid = $user->id();
 
     $output = $this->getUserDataDefaults();
 
@@ -230,7 +231,10 @@ class LnAddressService implements LnAddressServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function getPayCallbackUrl($user, $callback = NULL) {
+  public function getPayCallbackUrl(
+    UserInterface $user,
+    ?array $callback = NULL,
+  ): Url {
     $route_name = 'lnaddress.callback';
     $route_parameters = [];
 
@@ -244,50 +248,56 @@ class LnAddressService implements LnAddressServiceInterface {
 
     $route_parameters['lnaddress_callback'] = $callback['hash'];
 
-    $output = Url::fromRoute($route_name, $route_parameters, $options);
-
-    return $output;
+    return Url::fromRoute($route_name, $route_parameters, $options);
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getUserPayCallback($user) {
-    $query = $this->connection->insert(LnAddressConstants::TABLE_CALLBACKS);
+  public function getUserPayCallback(UserInterface $user): ?array {
+    try {
+      $query = $this->connection->insert(LnAddressConstants::TABLE_CALLBACKS);
 
-    $uid = $user->id();
-    $time = time();
-    $nonce = openssl_random_pseudo_bytes(256);
-    $user_data = $this->getUserData($user);
+      $uid = $user->id();
+      $time = time();
+      $nonce = openssl_random_pseudo_bytes(256);
+      $nonce = base64_encode($nonce);
+      $user_data = $this->getUserData($user);
 
-    $fields = [];
+      $fields = [];
 
-    $fields['created'] = $time;
-    $fields['uid'] = $uid;
+      $fields['created'] = $time;
+      $fields['uid'] = $uid;
 
-    $data = [
-      'uid' => $uid,
-      'time' => $time,
-      'nonce' => $nonce,
-    ];
-    $data = json_encode($data);
+      $data = [
+        'uid' => $uid,
+        'time' => $time,
+        'nonce' => $nonce,
+      ];
+      $data = json_encode($data);
 
-    $fields['hash'] = hash('sha256', $data);
-    $fields['enabled'] = TRUE;
-    $fields['min_sendable'] = $user_data['min_sendable'];
-    $fields['max_sendable'] = $user_data['max_sendable'];
+      $fields['hash'] = hash('sha256', $data);
+      $fields['enabled'] = TRUE;
+      $fields['min_sendable'] = $user_data['min_sendable'];
+      $fields['max_sendable'] = $user_data['max_sendable'];
 
-    $query->fields($fields);
+      $query->fields($fields);
 
-    $fields['id'] = $query->execute();
+      $fields['id'] = $query->execute();
 
-    return $fields;
+      return $fields;
+    }
+    catch (\Exception $e) {
+      Error::logException($this->logger, $e);
+    }
+
+    return NULL;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getPayCallback(array $conditions = []) {
+  public function getPayCallback(array $conditions = []): array {
     $a = 'a';
 
     $query = $this->connection->select(LnAddressConstants::TABLE_CALLBACKS, $a);
@@ -320,18 +330,20 @@ class LnAddressService implements LnAddressServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function getPaymentRequest($props = []) {
+  public function getPaymentRequest(array $props = []): string|bool {
     $invoice = $this->lightning->createInvoice($props);
 
     if ($invoice) {
       return $invoice->getBolt11();
     }
+
+    return FALSE;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function cron() {
+  public function cron(): void {
     // @todo Implement cron functionality
   }
 

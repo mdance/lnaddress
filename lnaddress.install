@@ -9,7 +9,7 @@ use Drupal\lnaddress\LnAddressConstants;
 /**
  * Implements hook_schema().
  */
-function lnaddress_schema() {
+function lnaddress_schema(): array {
   $output = [];
 
   $output[LnAddressConstants::TABLE_USER_DEFAULTS] = [

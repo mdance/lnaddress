@@ -1,0 +1,22 @@
+lnaddress.settings:
+  type: config_object
+  label: 'Lightning Network Address Settings'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Enabled'
+    domain:
+      type: string
+      label: 'Domain'
+    min_sendable:
+      type: integer
+      label: 'Minimum Sendable Amount'
+    max_sendable:
+      type: integer
+      label: 'Maximum Sendable Amount'
+    max_comment_length:
+      type: integer
+      label: 'Maximum Comment Length'
+    logging:
+      type: boolean
+      label: 'Logging'

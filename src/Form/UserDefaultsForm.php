@@ -2,12 +2,10 @@
 
 namespace Drupal\lnaddress\Form;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\lnaddress\LnAddressConstants;
 use Drupal\lnaddress\LnAddressServiceInterface;
-use Drupal\lnaddress\LnAddressServiceTrait;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -15,44 +13,39 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class UserDefaultsForm extends FormBase {
 
-  use LnAddressServiceTrait;
-
   /**
-   * {@inheritDoc}
+   * Provides the constructor.
+   *
+   * @param \Drupal\lnaddress\LnAddressServiceInterface $service
+   *   The module service.
    */
   public function __construct(
-    LnAddressServiceInterface $lnaddress
+    protected LnAddressServiceInterface $service,
   ) {
-    $this->lnaddress = $lnaddress;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('lnaddress')
-    );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'lnaddress_user_defaults_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $user = NULL) {
+  public function buildForm(
+    array $form,
+    FormStateInterface $form_state,
+    ?UserInterface $user = NULL,
+  ): array {
     $uid = NULL;
 
     if ($user) {
       $uid = $user->id();
     }
 
-    $user_data = $this->lnaddress()->getUserData($uid);
+    $user_data = $this->service->getUserData($uid);
 
     $key = 'enabled';
 
@@ -117,6 +110,17 @@ class UserDefaultsForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->cleanValues()->getValues();
+
+    // @todo Implement this logic
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('lnaddress'),
+    );
   }
 
 }

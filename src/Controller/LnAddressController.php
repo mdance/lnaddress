@@ -3,7 +3,9 @@
 namespace Drupal\lnaddress\Controller;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Utility\Error;
 use Drupal\lnaddress\LnAddressConstants;
 use Drupal\lnaddress\LnAddressServiceInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -22,9 +24,12 @@ class LnAddressController implements ContainerInjectionInterface {
    *
    * @param \Drupal\lnaddress\LnAddressServiceInterface $lnaddress
    *   Provides the module service.
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger service.
    */
   public function __construct(
     protected LnAddressServiceInterface $lnaddress,
+    protected LoggerChannelInterface $logger,
   ) {
   }
 
@@ -37,7 +42,7 @@ class LnAddressController implements ContainerInjectionInterface {
    * @return JsonResponse
    *   The JSON response.
    */
-  public function lnUrlPay($username) {
+  public function lnUrlPay(string $username): JsonResponse {
     $output = new JsonResponse();
 
     $data = [];
@@ -102,6 +107,8 @@ class LnAddressController implements ContainerInjectionInterface {
       $data['withdrawLink'] = '';
       $data['tag'] = 'payRequest';
     } catch (\Exception $e) {
+      Error::logException($this->logger, $e);
+
       $error = TRUE;
       $reason = $this->t('An error occurred getting a payment callback');
     }
@@ -128,7 +135,10 @@ class LnAddressController implements ContainerInjectionInterface {
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse
    */
-  public function callback($lnaddress_callback, Request $request) {
+  public function callback(
+    string $lnaddress_callback,
+    Request $request,
+  ): JsonResponse {
     $output = new JsonResponse();
 
     $data = [];
@@ -230,6 +240,8 @@ class LnAddressController implements ContainerInjectionInterface {
         // @todo Implement routes functionality.
         $data['routes'] = [];
       } catch (\Exception $e) {
+        Error::logException($this->logger, $e);
+
         $error = TRUE;
         $reason = $this->t('An error occurred retrieving a payment request.');
       }
@@ -252,7 +264,8 @@ class LnAddressController implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('lnaddress')
+      $container->get('lnaddress'),
+      $container->get('logger.channel.lnaddress'),
     );
   }
 
